@@ -15,21 +15,19 @@ module.exports.addWorkout = (req, res) => {
     .then(existingWorkout =>{
         if(existingWorkout){
 
-            res.status(409).send({ message: 'Workout already exists'})
+            return res.status(409).send({ message: 'Workout already exists'})
         
         }else{
-            // Saves the created object to our database
-            return newWorkout.save().then(result => res.status(201).send({
-
-                success: true,
-                message: 'Workout added successfully',
-                result: result
-
-            })).catch(error => errorHandler(error, req, res));
+            return newWorkout.save()
+            .then(result => {
+                res.status(201).send(result)
+            })
+            .catch(error => errorHandler(error, req, res))
         }
-    }).catch(error => errorHandler(error, req, res))
 
-}; 
+    })
+    .catch(error => errorHandler(error, req, res))
+} 
 
 
 
@@ -91,18 +89,21 @@ module.exports.completeWorkoutStatus = (req, res) => {
         status: "completed"
     };
 
-    return Workout.findById(req.params.workoutId)
+    Workout.findById(req.params.workoutId)
         .then(workout => {
             if (!workout) {
                 return res.status(404).send({ message: 'Workout not found' });
             }
-            if (workout.status === "completed") {
-                return res.status(200).send({ message: 'Workout already completed' });
-            }
 
+            if (workout.status === "completed") {
+                return res.status(200).send({ 
+                    message: 'Workout already completed' 
+                });
+            }
+            
             return Workout.findByIdAndUpdate(req.params.workoutId, completeWorkout, { new: true })
                 .then(updatedWorkout => {
-                    res.status(200).send({
+                    return res.status(200).send({
                         message: 'Workout status updated successfully',
                         updatedWorkout: updatedWorkout
                     });
